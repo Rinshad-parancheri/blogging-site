@@ -6,6 +6,4 @@ export const getPrisma = (database_url: string) => {
     datasourceUrl: database_url,
   }).$extends(withAccelerate())
   return prisma
-
-
 }
