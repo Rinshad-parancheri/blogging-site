@@ -1,23 +1,11 @@
 import { Hono } from 'hono'
-import { jwt, sign, verify } from 'hono/jwt'
+import { sign } from 'hono/jwt'
 import { getPrisma } from '../lib/prisma'
 import { hashPassword, verifyPassword } from '../utils/hashing'
 import { HTTPException } from 'hono/http-exception'
-
-type Bindings = {
-  DATABASE_URL: string
-  JWT_SECRET: string
-}
-
-enum StatusCode {
-  OK = 200,
-  CREATED = 201,
-  BAD_REQUEST = 400,
-  UNAUTHORIZED = 401,
-  NOT_FOUND = 404,
-  CONFLICT = 409,
-  INTERNAL_SERVER_ERROR = 500
-}
+import verifyJwtToken from '../middleware/jwtAuth'
+import { Bindings } from '../binding'
+import { updateData } from '../utils/type'
 
 const app = new Hono<{ Bindings: Bindings }>()
 
@@ -25,7 +13,7 @@ app.post('/signup', async (c) => {
 
 
   try {
-    const prisma = getPrisma(c.env.DATABASE_URL)
+    const prisma = getPrisma(c.env.DB_URL)
 
     const { name, password, email } = await c.req.json()
     const hashedPassword = await hashPassword(password)
@@ -56,10 +44,7 @@ app.post('/signup', async (c) => {
 
 app.post('/signin', async (c) => {
 
-
-
-  const prisma = getPrisma(c.env.DATABASE_URL)
-
+  const prisma = getPrisma(c.env.DB_URL)
   const { name, password, email } = await c.req.json()
 
   let existingUser;
@@ -94,7 +79,8 @@ app.post('/signin', async (c) => {
       userId: existingUser.id,
       email: existingUser.email
     },
-      c.env.JWT_SECRET
+      c.env.JWT_SECRET,
+      "HS256"
     )
   } catch (e) {
     throw new HTTPException(500, { message: `${e}` })
@@ -105,4 +91,46 @@ app.post('/signin', async (c) => {
     token: token
   })
 
+})
+
+
+app.patch('/udpate', verifyJwtToken, async (c) => {
+
+  const prisma = getPrisma(c.env.DB_URL)
+
+
+  const data = await c.req.json();
+
+  let payload = c.get('jwtPayload')
+  let existingUser;
+  try {
+    existingUser = await prisma.user.findUnique({
+      where: {
+        email: payload.email
+      }
+    })
+
+    if (!existingUser) {
+      throw new HTTPException(401, { message: 'invalid email' })
+
+    }
+  } catch (error) {
+    throw new HTTPException(500, { message: `${error}` })
+  }
+  const updateData: updateData = {};
+
+  if (data.name !== undefined) {
+    updateData.name = data.name;
+  }
+  if (data.email !== undefined) {
+    updateData.email = data.email;
+  }
+  if (data.password !== undefined) {
+    updateData.password = data.password;
+  }
+
+  await prisma.user.update({
+    where: { email: existingUser.email },
+    data: updateData,
+  });
 })
