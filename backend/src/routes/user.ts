@@ -1,13 +1,26 @@
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
-import { sign } from 'hono/jwt'
+import { jwt, sign } from 'hono/jwt'
 import { Enviroment } from '../binding'
 import { getPrisma } from '../lib/prisma'
 import verifyJwtToken from '../middleware/jwtAuth'
 import { hashPassword, verifyPassword } from '../utils/hashing'
 import { updateData } from '../utils/type'
+import { trimTrailingSlash } from 'hono/trailing-slash'
+import handleHttpException from '../utils/handException'
 
 const app = new Hono<Enviroment>()
+
+
+app.onError((e, c) => {
+  console.error(e)
+  if (e instanceof HTTPException) {
+    return c.json({ error: e.message }, e.status);
+  }
+
+  return c.json({ error: 'Internal server error' }, 500);
+
+})
 
 app.post('/signup', async (c) => {
   try {
@@ -47,12 +60,13 @@ app.post('/signup', async (c) => {
       throw new HTTPException(500, { message: 'user creation failed' })
     }
   } catch (e) {
-    console.error(e)
+
     if (e instanceof HTTPException) {
       return c.json({ error: e.message }, e.status);
     }
-
+    console.error(e)
     return c.json({ error: 'Internal server error' }, 500);
+
   }
 
 })
@@ -74,24 +88,21 @@ app.post('/signin', async (c) => {
       })
 
       if (!existingUser) {
-        throw new HTTPException(401, { message: 'invalid email' })
+        throw new HTTPException(401, { message: 'Invalid email' })
 
       }
     } catch (e) {
-      console.error(e)
-      throw new HTTPException(500, { message: `internal server error` })
+      throw e
     }
 
 
     try {
       let isValidPassword = await verifyPassword(existingUser.password, password)
-      console.log(typeof (isValidPassword))
       if (!isValidPassword) {
-        throw new HTTPException(401, { message: 'password incorect' })
+        throw new HTTPException(401, { message: 'Incorrect password' })
       }
     } catch (e) {
-      console.error(e)
-      throw new HTTPException(500, { message: 'internal server error' })
+      throw e
     }
 
     let token;
@@ -105,9 +116,9 @@ app.post('/signin', async (c) => {
       )
     } catch (e) {
       console.error(e)
-      throw new HTTPException(500, { message: `internal server error` })
+      throw e
     }
-    console.error(token)
+
 
 
     return c.json({
@@ -118,11 +129,10 @@ app.post('/signin', async (c) => {
 
     }, 200)
   } catch (e) {
-    console.error(e)
     if (e instanceof HTTPException) {
       return c.json({ error: e.message }, e.status);
     }
-
+    console.error(e)
     return c.json({ error: 'Internal server error' }, 500);
   }
 })
@@ -150,7 +160,7 @@ app.patch('/udpate', verifyJwtToken, async (c) => {
     }
   } catch (e) {
     console.error(e)
-    throw new HTTPException(500, { message: 'internal server error' })
+    throw e
   }
   const updateData: updateData = {};
 
