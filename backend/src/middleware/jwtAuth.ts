@@ -8,7 +8,10 @@ async function verifyJwtToken(c: Context, next: Next) {
   }
 
   try {
-    const decoded = await Jwt.verify(token, c.env.JWT_SECRET)
+    const decoded = await Jwt.verify(token, c.env.JWT_SECRET, "HS256")
+    if (!decoded.exp) {
+      c.json({ msg: 'not valued' }, 401)
+    }
     c.set('user', decoded)
     await next()
   } catch (error) {
