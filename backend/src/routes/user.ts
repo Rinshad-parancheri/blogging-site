@@ -5,7 +5,7 @@ import { Enviroment } from '../binding'
 import { getPrisma } from '../lib/prisma'
 import verifyJwtToken from '../middleware/jwtAuth'
 import { hashPassword, verifyPassword } from '../utils/hashing'
-import { updateData } from '../utils/type'
+import { updateData, userUpdateData } from '../utils/type'
 
 const app = new Hono<Enviroment>()
 
@@ -157,7 +157,7 @@ app.patch('/update', verifyJwtToken, async (c) => {
       throw e
     }
     data.password = await hashPassword(data.password)
-    const updateData: updateData = {};
+    const updateData: userUpdateData = {}
 
     if (data.name !== undefined && existingUser.name !== data.name) {
       updateData.name = data.name;
