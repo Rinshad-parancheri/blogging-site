@@ -5,7 +5,8 @@ import { Enviroment } from '../binding'
 import { getPrisma } from '../lib/prisma'
 import verifyJwtToken from '../middleware/jwtAuth'
 import { hashPassword, verifyPassword } from '../utils/hashing'
-import { updateData, userUpdateData } from '../utils/type'
+import { userUpdateData } from '../utils/type'
+import schemas from '../utils/input.schema'
 
 const app = new Hono<Enviroment>()
 
@@ -23,8 +24,16 @@ app.onError((e, c) => {
 app.post('/signup', async (c) => {
   try {
     const prisma = getPrisma(c.env.DB_URL)
+    const payload = await c.req.json()
+    const isValid = schemas.signUpSchema.safeParse(payload)
 
-    const { name, password, email } = await c.req.json()
+    if (!isValid.success) {
+      return c.json({
+        msg: `invalid inputs ${isValid.error}`
+      })
+    }
+    const { name, password, email } = payload
+
     let existing = await prisma.user.findUnique({
       where: {
         email: email
@@ -74,7 +83,16 @@ app.post('/signin', async (c) => {
 
   try {
     const prisma = getPrisma(c.env.DB_URL)
-    const { name, password, email } = await c.req.json()
+    const payload = await c.req.json()
+    const isValid = schemas.signUpSchema.safeParse(payload)
+
+    if (!isValid.success) {
+      return c.json({
+        msg: `invalid inputs ${isValid.error}`
+      })
+    }
+    const { name, password, email } = payload
+
 
     let existingUser;
     try {

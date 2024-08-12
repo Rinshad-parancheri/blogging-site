@@ -3,15 +3,23 @@ import { Enviroment } from "../binding";
 import { getPrisma } from "../lib/prisma";
 import verifyJwtToken from "../middleware/jwtAuth";
 import { blogUpdateSchema } from "../utils/type";
-import { HTTPException } from "hono/http-exception";
+import schemas from "../utils/input.schema";
 const app = new Hono<Enviroment>()
 
 app.use("*", verifyJwtToken)
 app.post('/post', async (c) => {
 
   try {
-    const blog = await c.req.json()
     const payload = await c.get("jwtPayload")
+    const blog = await c.req.json()
+    const isValid = schemas.signUpSchema.safeParse(blog)
+
+    if (!isValid.success) {
+      return c.json({
+        msg: `invalid inputs ${isValid.error}`
+      })
+    }
+
     const { content, title } = blog
     const { userId } = payload
     const prisma = getPrisma(c.env.DB_URL)
