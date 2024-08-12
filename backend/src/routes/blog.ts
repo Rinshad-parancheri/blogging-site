@@ -3,8 +3,7 @@ import { Enviroment } from "../binding";
 import { getPrisma } from "../lib/prisma";
 import verifyJwtToken from "../middleware/jwtAuth";
 import { blogUpdateSchema } from "../utils/type";
-import { stringBufferToString } from "hono/utils/html";
-import { useId } from "hono/jsx";
+import { HTTPException } from "hono/http-exception";
 const app = new Hono<Enviroment>()
 
 app.use("*", verifyJwtToken)
@@ -12,8 +11,7 @@ app.post('/post', async (c) => {
 
   try {
     const blog = await c.req.json()
-    const payload = c.get("jwtPayload")
-
+    const payload = await c.get("jwtPayload")
     const { content, title } = blog
     const { userId } = payload
     const prisma = getPrisma(c.env.DB_URL)
@@ -31,8 +29,8 @@ app.post('/post', async (c) => {
         }
       })
       if (createdBlog.id) {
-        c.json({
-          msg: 'blog updated Successfully',
+        return c.json({
+          msg: 'blog posted Successfully',
           blogId: createdBlog.id
         }, 200)
       }
@@ -88,24 +86,33 @@ app.patch('/update', async (c) => {
 
 app.get("/getblog/:id", async (c) => {
   try {
+    console.log("hell")
     const id = parseInt(c.req.param('id'))
-
-
+    if (!id) {
+      return c.json({
+        msg: `id not provided`,
+      },
+        401)
+    }
     const userId: string = c.get('jwtPayload')
     const prisma = getPrisma(c.env.DB_URL)
 
-    const blog = prisma.blog.findUnique({
+    const blog = await prisma.blog.findUnique({
       where: {
         id: id,
-        authorId: userId
       }
     })
-
+    if (blog == null) {
+      return c.json({
+        msg: "couldn't find the blog",
+      }, 401)
+    }
     return c.json({
       blog: blog,
     }, 500)
 
   } catch (e) {
+
     console.error(e);
     return c.json('internal server error', 500)
 
@@ -116,14 +123,14 @@ app.get('/getblogs', async (c) => {
   try {
     const prisma = getPrisma(c.env.DB_URL)
 
-    const blogs = prisma.blog.findMany({
+    const blogs = await prisma.blog.findMany({
       select: {
         title: true,
         id: true,
         content: true,
+        createdAt: true,
       }
     })
-
     return c.json({
       blogs: blogs
     }, 200)

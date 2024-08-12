@@ -14,7 +14,7 @@ async function verifyJwtToken(c: Context, next: Next) {
     }
     c.set('jwtPayload', decoded)
     await next()
-  } catch (error) {
+  } catch (error)  {
     console.error()
     return c.json({ error: `invalid credentials` }, 401)
   }
