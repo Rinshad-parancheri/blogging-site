@@ -2,8 +2,7 @@ import { Hono } from "hono";
 import { Enviroment } from "../binding";
 import { getPrisma } from "../lib/prisma";
 import verifyJwtToken from "../middleware/jwtAuth";
-import { blogUpdateSchema } from "../utils/type";
-import schemas from "../utils/input.schema";
+import { blogSchemas, blogUpdateInputSchema } from "@rinshadp014/blogging-site-common"
 const app = new Hono<Enviroment>()
 
 app.use("*", verifyJwtToken)
@@ -12,14 +11,14 @@ app.post('/post', async (c) => {
   try {
     const payload = await c.get("jwtPayload")
     const blog = await c.req.json()
-    const isValid = schemas.signUpSchema.safeParse(blog)
 
-    if (!isValid.success) {
+    const parsedData = blogSchemas.blogSchema.safeParse(blog)
+    if (!parsedData.success) {
+      console.log(parsedData.error.issues[0])
       return c.json({
-        msg: `invalid inputs ${isValid.error}`
-      })
+        msg: `invalid ${parsedData.error.issues[0].message}`
+      }, 401)
     }
-
     const { content, title } = blog
     const { userId } = payload
     const prisma = getPrisma(c.env.DB_URL)
@@ -58,18 +57,30 @@ app.patch('/update', async (c) => {
     const blog = await c.req.json()
     const payload = c.get("jwtPayload")
 
-
+    try {
+      const parsedData = blogSchemas.blogUpdateSchema.safeParse(blog)
+      if (!parsedData.success) {
+        console.log(parsedData.error)
+        return c.json({
+          msg: `invalid ${parsedData.error.issues[0].message}`
+        }, 401)
+      }
+    } catch (e) {
+      throw (e)
+    }
     const userId: string = payload.userId
 
     const prisma = getPrisma(c.env.DB_URL)
-    const updateData: blogUpdateSchema = {}
+    const updateData: blogUpdateInputSchema = {}
 
-    if (!blog.content == undefined) {
-      updateData.content = blog.content
+
+    if (blog.content !== undefined) {
+      updateData.content = blog.content;
     }
-    if (!blog.title == undefined) {
-      updateData.title = blog.title
+    if (blog.title !== undefined) {
+      updateData.title = blog.title;
     }
+
     try {
       prisma.blog.update({
         where: {
@@ -94,7 +105,6 @@ app.patch('/update', async (c) => {
 
 app.get("/getblog/:id", async (c) => {
   try {
-    console.log("hell")
     const id = parseInt(c.req.param('id'))
     if (!id) {
       return c.json({
@@ -102,7 +112,6 @@ app.get("/getblog/:id", async (c) => {
       },
         401)
     }
-    const userId: string = c.get('jwtPayload')
     const prisma = getPrisma(c.env.DB_URL)
 
     const blog = await prisma.blog.findUnique({
@@ -110,14 +119,14 @@ app.get("/getblog/:id", async (c) => {
         id: id,
       }
     })
-    if (blog == null) {
+    if (!blog) {
       return c.json({
         msg: "couldn't find the blog",
       }, 401)
     }
     return c.json({
       blog: blog,
-    }, 500)
+    }, 200)
 
   } catch (e) {
 
