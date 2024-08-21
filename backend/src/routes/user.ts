@@ -5,9 +5,7 @@ import { Enviroment } from '../binding'
 import { getPrisma } from '../lib/prisma'
 import verifyJwtToken from '../middleware/jwtAuth'
 import { hashPassword, verifyPassword } from '../utils/hashing'
-import { userUpdateData } from '../utils/type'
-import schemas from '../utils/input.schema'
-
+import { userSchemas, userUpdateInputDataSchema } from '@rinshadp014/blogging-site-common'
 const app = new Hono<Enviroment>()
 
 
@@ -24,15 +22,20 @@ app.onError((e, c) => {
 app.post('/signup', async (c) => {
   try {
     const prisma = getPrisma(c.env.DB_URL)
-    const payload = await c.req.json()
-    const isValid = schemas.signUpSchema.safeParse(payload)
+    const data = await c.req.json()
+    try {
 
-    if (!isValid.success) {
-      return c.json({
-        msg: `invalid inputs ${isValid.error}`
-      })
+      const parsedData = userSchemas.signInSchema.safeParse(data)
+      if (!parsedData.success) {
+        return c.json({
+          msg: `invalid ${parsedData.error.issues[0].message}`
+        }, 401)
+      }
+    } catch (e) {
+      throw (e)
     }
-    const { name, password, email } = payload
+
+    const { name, password, email } = data
 
     let existing = await prisma.user.findUnique({
       where: {
@@ -83,15 +86,19 @@ app.post('/signin', async (c) => {
 
   try {
     const prisma = getPrisma(c.env.DB_URL)
-    const payload = await c.req.json()
-    const isValid = schemas.signUpSchema.safeParse(payload)
+    const data = await c.req.json()
 
-    if (!isValid.success) {
-      return c.json({
-        msg: `invalid inputs ${isValid.error}`
-      })
+    try {
+      const parsedData = userSchemas.signInSchema.safeParse(data)
+      if (!parsedData.success) {
+        return c.json({
+          msg: `invalid ${parsedData.error.issues[0].message}`
+        }, 401)
+      }
+    } catch (e) {
+      throw (e)
     }
-    const { name, password, email } = payload
+    const { name, password, email } = data
 
 
     let existingUser;
@@ -158,6 +165,16 @@ app.patch('/update', verifyJwtToken, async (c) => {
 
 
     const data = await c.req.json();
+    try {
+      const parsedData = userSchemas.userUpdateSchema.safeParse(data)
+      if (!parsedData.success) {
+        return c.json({
+          msg: `invalid ${parsedData.error.issues[0].message}`
+        }, 401)
+      }
+    } catch (e) {
+      throw (e)
+    }
     let payload = c.get('jwtPayload')
     let existingUser;
     try {
@@ -175,7 +192,7 @@ app.patch('/update', verifyJwtToken, async (c) => {
       throw e
     }
     data.password = await hashPassword(data.password)
-    const updateData: userUpdateData = {}
+    const updateData: userUpdateInputDataSchema = {}
 
     if (data.name !== undefined && existingUser.name !== data.name) {
       updateData.name = data.name;

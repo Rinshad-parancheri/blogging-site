@@ -7,8 +7,8 @@
   "dependencies": {
     "@prisma/client": "^5.18.0",
     "@prisma/extension-accelerate": "^1.1.0",
-    "hono": "^4.5.4",
-    "zod": "^3.23.8"
+    "@rinshadp014/blogging-site-common": "^1.2.6",
+    "hono": "^4.5.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240806.0",
