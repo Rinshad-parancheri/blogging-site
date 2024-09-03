@@ -5,7 +5,8 @@ import { Enviroment } from '../binding'
 import { getPrisma } from '../lib/prisma'
 import verifyJwtToken from '../middleware/jwtAuth'
 import { hashPassword, verifyPassword } from '../utils/hashing'
-import { userSchemas, userUpdateInputDataSchema } from '@rinshadp014/blogging-site-common'
+import { UserUpdateInputDataSchema } from '@rinshadp014/blogging-site-common'
+import userschemas from '@rinshadp014/blogging-site-common/dist/userSchema'
 const app = new Hono<Enviroment>()
 
 
@@ -25,7 +26,7 @@ app.post('/signup', async (c) => {
     const data = await c.req.json()
     try {
 
-      const parsedData = userSchemas.signInSchema.safeParse(data)
+      const parsedData = userschemas.signInSchema.safeParse(data)
       if (!parsedData.success) {
         return c.json({
           msg: `invalid ${parsedData.error.issues[0].message}`
@@ -89,7 +90,7 @@ app.post('/signin', async (c) => {
     const data = await c.req.json()
 
     try {
-      const parsedData = userSchemas.signInSchema.safeParse(data)
+      const parsedData = userschemas.signInSchema.safeParse(data)
       if (!parsedData.success) {
         return c.json({
           msg: `invalid ${parsedData.error.issues[0].message}`
@@ -166,7 +167,7 @@ app.patch('/update', verifyJwtToken, async (c) => {
 
     const data = await c.req.json();
     try {
-      const parsedData = userSchemas.userUpdateSchema.safeParse(data)
+      const parsedData = userschemas.userUpdateSchema.safeParse(data)
       if (!parsedData.success) {
         return c.json({
           msg: `invalid ${parsedData.error.issues[0].message}`
@@ -192,7 +193,7 @@ app.patch('/update', verifyJwtToken, async (c) => {
       throw e
     }
     data.password = await hashPassword(data.password)
-    const updateData: userUpdateInputDataSchema = {}
+    const updateData: UserUpdateInputDataSchema = {}
 
     if (data.name !== undefined && existingUser.name !== data.name) {
       updateData.name = data.name;

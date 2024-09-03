@@ -12,8 +12,8 @@ const blogUpdateSchema = z.object({
 
 
 
-export type blogUpdateInputSchema = z.infer<typeof blogUpdateSchema>
-export type blogInputSchema = z.infer<typeof blogSchema>
+export type BlogUpdateInputSchema = z.infer<typeof blogUpdateSchema>
+export type BlogInputSchema = z.infer<typeof blogSchema>
 
 
 const blogSchemas = {

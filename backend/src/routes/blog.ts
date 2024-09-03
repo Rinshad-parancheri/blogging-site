@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { Enviroment } from "../binding";
 import { getPrisma } from "../lib/prisma";
 import verifyJwtToken from "../middleware/jwtAuth";
-import { blogSchemas, blogUpdateInputSchema } from "@rinshadp014/blogging-site-common"
+import { BlogUpdateInputSchema } from "@rinshadp014/blogging-site-common"
+import blogSchemas from "@rinshadp014/blogging-site-common/dist/blogSchema";
 const app = new Hono<Enviroment>()
 
 app.use("*", verifyJwtToken)
@@ -71,14 +72,14 @@ app.patch('/update', async (c) => {
     const userId: string = payload.userId
 
     const prisma = getPrisma(c.env.DB_URL)
-    const updateData: blogUpdateInputSchema = {}
+    const updateData: BlogUpdateInputSchema = {}
 
 
     if (blog.content !== undefined) {
       updateData.content = blog.content;
     }
     if (blog.title !== undefined) {
-      updateData.title = blog.title;
+      updateData.tittle = blog.tittle;
     }
 
     try {
