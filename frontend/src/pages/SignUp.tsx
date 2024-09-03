@@ -1,12 +1,13 @@
+import SignUpFormCard from "../components/SignUpFormCard"
+import Quote from "../components/Quote"
+
 export const SignUp = () => {
   return (
-    <div className="contianer">
-
-      <div className="">
-        <h3>Create an account</h3>
-        <p>Already have an account</p>
+    <div className="grid grid-cols-1 lg:grid-cols-2 ">
+      <div><SignUpFormCard ></SignUpFormCard></div>
+      <div className="invisible lg:visible">
+        <Quote></Quote>
       </div>
-      <div></div>
     </div>
   )
 }
