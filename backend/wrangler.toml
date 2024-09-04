@@ -2,11 +2,12 @@
 compatibility_date = "2024-08-07"
 #
 #  [vars]
-# db_url="prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiYjQzOGYyNTctYjcwOC00YjNjLWE4NWQtNmZmMmUxM2FlMDkwIiwidGVuYW50X2lkIjoiZGQxYWE1ZGQwYTI1NDNmNDc4YjIyNWUwNDdlZGNiNTlkYmYwY2I5NjNhZjMxODcyYmI2ZDRkNWNhYzFiM2UwMCIsImludGVybmFsX3NlY3JldCI6Ijk4YTk0YTgyLTNmZTYtNDc0OS1hMDliLWYxZTYzZGI1YTQ4ZSJ9.xJs0qMEJ-8doh7MtOnB2lBZmI25azOgUJxwYVZD5WGw"
 # [[kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"
 # id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
+[dev]
+port = 8080
+local_protocol = "http"
 # [[r2_buckets]]
 # binding = "MY_BUCKET"
 # bucket_name = "my-bucket"

@@ -4,6 +4,7 @@ export type Enviroment = {
   Bindings: {
     JWT_SECRET: string;
     DB_URL: string;
+    DIRECT_URL: string;
   },
   Variables: {
     prisma: PrismaClient;

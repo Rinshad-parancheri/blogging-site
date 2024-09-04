@@ -25,14 +25,14 @@ app.post('/signup', async (c) => {
     const prisma = getPrisma(c.env.DB_URL)
     const data = await c.req.json()
     try {
-
-      const parsedData = userschemas.signInSchema.safeParse(data)
+      const parsedData = userschemas.signUpSchema.safeParse(data)
       if (!parsedData.success) {
         return c.json({
           msg: `invalid ${parsedData.error.issues[0].message}`
         }, 401)
       }
     } catch (e) {
+      console.error(e)
       throw (e)
     }
 
@@ -47,7 +47,6 @@ app.post('/signup', async (c) => {
       throw new HTTPException(401, { message: `email already taken` })
     }
 
-
     const hashedPassword = await hashPassword(password)
     try {
       const user = await prisma.user.create({
@@ -57,15 +56,32 @@ app.post('/signup', async (c) => {
           password: hashedPassword,
         },
         select: {
-          name: true
+          name: true,
+          email: true,
+          id: true
         }
       })
-
-      c.status(201)
+      let token;
+      let secret = c.env.JWT_SECRET
+      try {
+        token = await sign({
+          userId: user.id,
+          email: user.email,
+        },
+          secret,
+          "HS256"
+        )
+      } catch (e) {
+        throw e
+      }
 
       return c.json({
-        msg: `${user.name} account created successfully`
-      })
+        userName: user.name,
+        email: user.email,
+        token: token,
+
+      }, 200)
+
     } catch (e) {
       console.error(e)
       throw new HTTPException(500, { message: 'user creation failed' })
@@ -88,7 +104,6 @@ app.post('/signin', async (c) => {
   try {
     const prisma = getPrisma(c.env.DB_URL)
     const data = await c.req.json()
-
     try {
       const parsedData = userschemas.signInSchema.safeParse(data)
       if (!parsedData.success) {
@@ -99,7 +114,7 @@ app.post('/signin', async (c) => {
     } catch (e) {
       throw (e)
     }
-    const { name, password, email } = data
+    const { password, email } = data
 
 
     let existingUser;
@@ -129,12 +144,13 @@ app.post('/signin', async (c) => {
     }
 
     let token;
+    let secret = c.env.JWT_SECRET
     try {
       token = await sign({
         userId: existingUser.id,
         email: existingUser.email,
       },
-        c.env.JWT_SECRET,
+        secret,
         "HS256"
       )
     } catch (e) {
