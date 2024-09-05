@@ -1,13 +1,13 @@
 import z from "zod"
 
 const blogSchema = z.object({
-  tittle: z.string().min(10).max(20),
-  content: z.string().min(50).max(200)
+  title: z.string().min(20).max(100),
+  content: z.string().min(200).max(10000)
 })
 
 const blogUpdateSchema = z.object({
-  tittle: z.string().min(10).max(20).optional(),
-  content: z.string().min(50).max(200).optional()
+  title: z.string().min(20).max(100),
+  content: z.string().min(200).max(10000)
 })
 
 
