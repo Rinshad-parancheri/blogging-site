@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import Button from './Button';
 import LabbledInput from './LabelledInput';
 import { SignInInputSchema } from "@rinshadp014/blogging-site-common";
 import UpperPart from "./FormUpperPart";
-
+import axios from "axios";
+import { Navigate, useNavigate } from "react-router-dom";
 
 
 const SignInFormCard = () => {
-
+  const navigate = useNavigate()
 
   const [postInput, setPostInput] = useState<SignInInputSchema>({
     password: "",
@@ -39,15 +39,16 @@ const SignInFormCard = () => {
             (e) => {
               setPostInput({
                 ...postInput,
-                email: e.target.value
+                password: e.target.value
               })
             }
           }></LabbledInput>
         <Button
           content={'signin'}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault()
-
+            await sendRequest(postInput)
+            navigate('/blogs')
           }}>
 
         </Button>
@@ -55,5 +56,25 @@ const SignInFormCard = () => {
 
     </div >
   )
+}
+
+type SendRequest = {
+  email: string;
+  password: string;
+}
+
+async function sendRequest(postInput: SendRequest) {
+  try {
+    console.log(postInput)
+    const response = await axios.post(`http://backend.rinshadp014.workers.dev/app/v1/user/signin`, postInput)
+
+    let data = response.data
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('userName', data.userName)
+    console.log(localStorage.getItem('token'))
+  } catch (e) {
+    console.log(e)
+
+  }
 }
 export default SignInFormCard

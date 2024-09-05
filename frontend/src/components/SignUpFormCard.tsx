@@ -3,9 +3,11 @@ import { useState } from "react";
 import Button from './Button';
 import UpperPart from './FormUpperPart';
 import LabbledInput from './LabelledInput';
+import axios from 'axios';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 const SignUpFormCard = () => {
-
+  const navigate = useNavigate()
   const [postInput, setPostInput] = useState<SignUpInputSchema>({
     name: "",
     password: "",
@@ -43,20 +45,41 @@ const SignUpFormCard = () => {
             (e) => {
               setPostInput({
                 ...postInput,
-                email: e.target.value
+                password: e.target.value
               })
             }
           }></LabbledInput>
         <Button
           content={'signin'}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault()
-
+            await sendRequest(postInput)
+            navigate('/blogs')
           }}>
 
         </Button>
       </div>
     </div >
   )
+}
+
+type SendRequest = {
+  email: string;
+  password: string;
+  name: string
+}
+
+async function sendRequest(postInput: SendRequest) {
+  try {
+
+    const response = await axios.post(`http://backend.rinshadp014.workers.dev/app/v1/user/signup`, postInput)
+    let data = response.data
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('userName', data.userName)
+
+  } catch (e) {
+    console.log(e)
+
+  }
 }
 export default SignUpFormCard
