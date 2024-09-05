@@ -106,7 +106,8 @@ app.patch('/update', async (c) => {
 
 app.get("/getblog/:id", async (c) => {
   try {
-    const id = parseInt(c.req.param('id'))
+    const id = c.req.param('id')
+
     if (!id) {
       return c.json({
         msg: `id not provided`,
@@ -117,7 +118,18 @@ app.get("/getblog/:id", async (c) => {
 
     const blog = await prisma.blog.findUnique({
       where: {
-        id: id,
+        id: Number(id),
+      },
+      select: {
+        content: true,
+        id: true,
+        createdAt: true,
+        title: true,
+        author: {
+          select: {
+            name: true
+          }
+        }
       }
     })
     if (!blog) {
@@ -142,11 +154,17 @@ app.get('/getblogs', async (c) => {
     const prisma = getPrisma(c.env.DB_URL)
 
     const blogs = await prisma.blog.findMany({
+
       select: {
         title: true,
         id: true,
         content: true,
         createdAt: true,
+        author: {
+          select: {
+            name: true
+          }
+        }
       }
     })
     return c.json({
